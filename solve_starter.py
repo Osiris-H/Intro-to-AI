@@ -23,7 +23,10 @@ def is_goal(state):
     :rtype: bool
     """
 
-    raise NotImplementedError
+    box_pos = state.board.boxes
+    dest = state.board.storage
+
+    return set(box_pos) == set(dest)
 
 
 def get_path(state):
@@ -37,7 +40,16 @@ def get_path(state):
     :rtype: List[State]
     """
 
-    raise NotImplementedError
+    states = []
+    cur = state
+    while True:
+        states.insert(0, cur)
+        if cur.depth == 0:
+            break
+        else:
+            cur = cur.parent
+
+    return states
 
 
 def get_successors(state):
@@ -51,7 +63,37 @@ def get_successors(state):
     :rtype: List[State]
     """
 
-    raise NotImplementedError
+    def sanity_check(position):
+        return position[0] <= state.board.width and position[1] <= state.board.height
+
+    states = []
+    robots = state.board.robots
+    for robot in robots:
+        up = (robot[0], robot[1] + 1)
+        down = (robot[0], robot[1] - 1)
+        left = (robot[0] - 1, robot[1])
+        right = (robot[0] + 1, robot[1])
+        new_pos = [up, down, left, right]
+        for pos in new_pos:
+            if not sanity_check(pos):
+                print("Position of robot out of bound.")
+                continue
+            if pos in state.board.obstacles:
+                continue
+            elif pos in state.board.boxes:
+                # TODO: Implementation
+                continue
+            else:
+                idx = robots.index(robot)
+                new_bots = [
+                    pos if i == idx else old_pos for i, old_pos in enumerate(robots)
+                ]
+                new_board = Board(state.board.name, state.board.width, state.board.height, new_bots, state.board.boxes,
+                                  state.board.storage, state.board.obstacles)
+                new_state = State(new_board, state.hfn, state.f, state.depth+1, state)
+                states.append(new_state)
+
+    return states
 
 
 def dfs(init_board, hfn):
