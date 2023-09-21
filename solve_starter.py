@@ -66,27 +66,50 @@ def get_successors(state):
     def sanity_check(position):
         return position[0] <= state.board.width and position[1] <= state.board.height
 
+    def check_box_pos(pos):
+        if any(pos in container for container in (state.board.obstacles, state.board.boxes, state.board.robots)):
+            return False
+        return True
+
     states = []
     robots = state.board.robots
+    boxes = state.board.boxes
     for robot in robots:
-        up = (robot[0], robot[1] + 1)
-        down = (robot[0], robot[1] - 1)
-        left = (robot[0] - 1, robot[1])
-        right = (robot[0] + 1, robot[1])
-        new_pos = [up, down, left, right]
-        for pos in new_pos:
-            if not sanity_check(pos):
+        up = (0, 1)
+        down = (0, -1)
+        left = (-1, 0)
+        right = (1, 0)
+        moves = [up, down, left, right]
+        for move in moves:
+            robot_pos = tuple(x + y for x, y in zip(robot, move))
+            if not sanity_check(robot_pos):
                 print("Position of robot out of bound.")
                 continue
-            if pos in state.board.obstacles:
+            if robot_pos in state.board.obstacles:
                 continue
-            elif pos in state.board.boxes:
-                # TODO: Implementation
+            elif robot_pos in state.board.robots:
                 continue
+            elif robot_pos in boxes:
+                box_pos = tuple(x + y for x, y in zip(robot_pos, move))
+                if check_box_pos(box_pos):
+                    bot_id = robots.index(robot)
+                    box_id = boxes.index(robot_pos)
+                    new_bots = [
+                        robot_pos if i == bot_id else old_pos for i, old_pos in enumerate(robots)
+                    ]
+                    new_boxes = [
+                        box_pos if i == box_id else old_pos for i, old_pos in enumerate(boxes)
+                    ]
+                    new_board = Board(state.board.name, state.board.width, state.board.height, new_bots, new_boxes,
+                                      state.board.storage, state.board.obstacles)
+                    new_state = State(new_board, state.hfn, state.f, state.depth + 1, state)
+                    states.append(new_state)
+                else:
+                    continue
             else:
                 idx = robots.index(robot)
                 new_bots = [
-                    pos if i == idx else old_pos for i, old_pos in enumerate(robots)
+                    robot_pos if i == idx else old_pos for i, old_pos in enumerate(robots)
                 ]
                 new_board = Board(state.board.name, state.board.width, state.board.height, new_bots, state.board.boxes,
                                   state.board.storage, state.board.obstacles)
