@@ -1,8 +1,13 @@
 ############################################################
 ## CSC 384, Intro to AI, University of Toronto.
 ## Assignment 1 Starter Code
-## v1.0
+## v1.1
+##
+## Changes: 
+## v1.1: Changed comments in Board class to create boxes, storage, and obstacles as lists. 
+##       Removed the commented out __eq__ function in State class.
 ############################################################
+
 
 from typing import List
 
@@ -33,12 +38,15 @@ class Board:
         :param robots: positions for each robot that is on the board. Each robot position is a tuple (x, y), 
                        that denotes the robot’s x and y position.
         :type robots: List[tuple]
-        :param boxes: positions for each box in a frozenset. Each position is an (x, y) tuple.
-        :type boxes: frozenset[tuple]
-        :param storage: positions for each storage bin that is on the board.
-        :type storage: frozenset[tuple]
-        :param obstacles: locations of all of the obstacles (i.e. walls) on the board.
-        :type obstacles: frozenset[tuple]
+        
+        :param boxes: positions for each box in a list. Each position is an (x, y) tuple.
+        :type boxes: List[tuple]
+        
+        :param storage: positions for all the storage points in a list.
+        :type storage: List[tuple]
+
+        :param obstacles: locations of all of the obstacles (i.e. walls) in a list.
+        :type obstacles: List[tuple]
         :rtype: Board
         """
         self.name = name
@@ -136,12 +144,6 @@ class State:
 
         self.id = hash(board)  # The id for breaking ties.
 
-    # customized eq for object comparison.
-    # def __eq__(self, other):
-    #     if isinstance(other, State):
-    #         return self.f == other.f and self.id == other.id
-    #     return False
-
     # customized lt for object comparison.
     def __lt__(self, other):
         return self.f < other.f
@@ -177,7 +179,9 @@ def read_from_file(filename: str) -> Board:
 
     row = 0
     board = Board("", -1, -1, [], [], [], [])
+
     for line in puzzle_file:
+
         if counter == 0: # first line has name of puzzle
             board.name = line.strip()
         elif counter == 1: # second line has width
@@ -202,9 +206,8 @@ def read_from_file(filename: str) -> Board:
                 elif char.isalpha() and char.islower():
                     board.robots.append((col, row))
             row += 1
+
         counter += 1
+
     puzzle_file.close()
     return board
-
-
-
