@@ -16,6 +16,7 @@ import math # for infinity
 
 from board import *
 
+
 def is_goal(state):
     """
     Returns True if the state is the goal state and False otherwise.
@@ -174,7 +175,7 @@ def heuristic_basic(board):
     :rtype: int
     """
 
-    raise NotImplementedError
+    return heuristic_zero(board)
 
 
 def heuristic_advanced(board):
@@ -187,7 +188,7 @@ def heuristic_advanced(board):
     :rtype: int
     """
 
-    raise NotImplementedError
+    return heuristic_zero(board)
 
 
 def solve_puzzle(board: Board, algorithm: str, hfn):
