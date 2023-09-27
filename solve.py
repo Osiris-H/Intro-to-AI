@@ -150,7 +150,7 @@ def dfs(init_board):
     solution = []
     cost = -1
 
-    init_state = State(init_board, hfn=None, f=0, depth=0)
+    init_state = State(board=init_board, hfn=None, f=0, depth=0)
     final_state = dfs_helper(init_state)
     if final_state:
         solution = get_path(final_state)
@@ -176,7 +176,23 @@ def a_star(init_board, hfn):
     :rtype: List[State], int
     """
 
-    raise NotImplementedError
+    solution = []
+    cost = -1
+
+    init_state = State(board=init_board, hfn=hfn, f=hfn(init_board), depth=0)
+    states = []
+    heapq.heappush(states, init_state)
+
+    while states:
+        cur = heapq.heappop(states)
+        if is_goal(cur):
+            solution = get_path(cur)
+            cost = cur.depth
+            break
+        for successor in get_successors(cur):
+            heapq.heappush(states, successor)
+
+    return solution, cost
 
 
 def heuristic_basic(board):
