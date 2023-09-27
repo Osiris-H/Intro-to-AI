@@ -138,7 +138,25 @@ def dfs(init_board):
     :rtype: List[State], int
     """
 
-    raise NotImplementedError
+    def dfs_helper(state):
+        if is_goal(state):
+            return state
+        for successor in get_successors(state):
+            result = dfs_helper(successor)
+            if result:
+                return result
+        return None
+
+    solution = []
+    cost = -1
+
+    init_state = State(init_board, hfn=None, f=0, depth=0)
+    final_state = dfs_helper(init_state)
+    if final_state:
+        solution = get_path(final_state)
+        cost = final_state.depth
+
+    return solution, cost
 
 
 def a_star(init_board, hfn):
