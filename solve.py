@@ -106,7 +106,12 @@ def get_successors(state):
                     ]
                     new_board = Board(state.board.name, state.board.width, state.board.height, new_bots, new_boxes,
                                       state.board.storage, state.board.obstacles)
-                    new_state = State(new_board, state.hfn, state.f, state.depth + 1, state)
+                    depth = state.depth + 1
+                    if state.hfn is not None:
+                        f = state.hfn(new_board) + depth
+                    else:
+                        f = depth
+                    new_state = State(new_board, state.hfn, f, depth, state)
                     states.append(new_state)
                 else:
                     continue
@@ -209,7 +214,16 @@ def heuristic_basic(board):
     :rtype: int
     """
 
-    return heuristic_zero(board)
+    def manhattan_distance(p1, p2):
+        return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+    total_distance = 0
+    for box in board.boxes:
+        # TODO: Consider the situation when two boxes have the same distance to a distinct storage point
+        distance = [manhattan_distance(box, storage) for storage in board.storage]
+        total_distance += min(distance)
+
+    return total_distance
 
 
 def heuristic_advanced(board):
