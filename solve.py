@@ -106,12 +106,8 @@ def get_successors(state):
                     ]
                     new_board = Board(state.board.name, state.board.width, state.board.height, new_bots, new_boxes,
                                       state.board.storage, state.board.obstacles)
-                    depth = state.depth + 1
-                    if state.hfn is not None:
-                        f = state.hfn(new_board) + depth
-                    else:
-                        f = depth
-                    new_state = State(new_board, state.hfn, f, depth, state)
+                    new_state = State(board=new_board, hfn=state.hfn, f=state.hfn(new_board)+state.depth+1,
+                                      depth=state.depth+1, parent=state)
                     states.append(new_state)
                 else:
                     continue
@@ -122,7 +118,8 @@ def get_successors(state):
                 ]
                 new_board = Board(state.board.name, state.board.width, state.board.height, new_bots, state.board.boxes,
                                   state.board.storage, state.board.obstacles)
-                new_state = State(new_board, state.hfn, state.f, state.depth + 1, state)
+                new_state = State(board=new_board, hfn=state.hfn, f=state.hfn(new_board) + state.depth + 1,
+                                  depth=state.depth + 1, parent=state)
                 states.append(new_state)
 
     return states
@@ -143,19 +140,26 @@ def dfs(init_board):
     :rtype: List[State], int
     """
 
+    visited = set()
+
     def dfs_helper(state):
         if is_goal(state):
             return state
-        for successor in get_successors(state):
-            result = dfs_helper(successor)
-            if result:
-                return result
+
+        visited.add(state.board)
+        successors = get_successors(state)
+        for successor in successors:
+            if successor.board not in visited:
+                successor.board.display()
+                result = dfs_helper(successor)
+                if result:
+                    return result
         return None
 
     solution = []
     cost = -1
 
-    init_state = State(board=init_board, hfn=None, f=0, depth=0)
+    init_state = State(board=init_board, hfn=heuristic_zero, f=0, depth=0)
     final_state = dfs_helper(init_state)
     if final_state:
         solution = get_path(final_state)
@@ -188,13 +192,22 @@ def a_star(init_board, hfn):
     states = []
     heapq.heappush(states, init_state)
 
+    visited = {}
+
     while states:
         cur = heapq.heappop(states)
         if is_goal(cur):
             solution = get_path(cur)
             cost = cur.depth
             break
+
+        if cur.board in visited and visited[cur.board] <= cur.f:
+            continue
+
+        visited[cur.board] = cur.f
+
         for successor in get_successors(cur):
+            successor.board.display()
             heapq.heappush(states, successor)
 
     return solution, cost
@@ -217,9 +230,10 @@ def heuristic_basic(board):
     def manhattan_distance(p1, p2):
         return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
+    # TODO: Consider the situation when two boxes have the same distance to a distinct storage point
+
     total_distance = 0
     for box in board.boxes:
-        # TODO: Consider the situation when two boxes have the same distance to a distinct storage point
         distance = [manhattan_distance(box, storage) for storage in board.storage]
         total_distance += min(distance)
 
@@ -324,7 +338,13 @@ if __name__ == "__main__":
         choices=['zero', 'basic', 'advanced'],
         help="The heuristic used for any heuristic search."
     )
-    args = parser.parse_args()
+
+    # TODO: deleted before submission
+    arg_list = ['--algorithm', 'a_star', '--heuristic', 'basic', '--inputfile', 'sokoban.txt', '--outputfile',
+                'solution2.txt']
+    args = parser.parse_args(arg_list)
+
+    # args = parser.parse_args()
 
     # set the heuristic function
     heuristic = heuristic_zero
