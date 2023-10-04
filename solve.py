@@ -250,7 +250,23 @@ def heuristic_advanced(board):
     :rtype: int
     """
 
-    return heuristic_zero(board)
+    def manhattan_distance(p1, p2):
+        return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+    box_incomplete = [box for box in board.boxes if box not in board.storage]
+    storage_incomplete = [storage for storage in board.storage if storage not in board.boxes]
+
+    score = 0
+
+    for box in box_incomplete:
+        distances = [manhattan_distance(box, storage) for storage in storage_incomplete]
+        score += min(distances)
+
+    for robot in board.robots:
+        distances = [manhattan_distance(robot, box) for box in box_incomplete]
+        score += max(distances)
+
+    return score
 
 
 def solve_puzzle(board: Board, algorithm: str, hfn):
