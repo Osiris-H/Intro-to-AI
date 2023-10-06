@@ -257,14 +257,14 @@ def heuristic_advanced(board):
     storage_incomplete = [storage for storage in board.storage if storage not in board.boxes]
 
     score = 0
+    if len(box_incomplete) is not 0:
+        for box in box_incomplete:
+            distances = [manhattan_distance(box, storage) for storage in storage_incomplete]
+            score += min(distances)
 
-    for box in box_incomplete:
-        distances = [manhattan_distance(box, storage) for storage in storage_incomplete]
-        score += min(distances)
-
-    for robot in board.robots:
-        distances = [manhattan_distance(robot, box) for box in box_incomplete]
-        score += max(distances)
+        for robot in board.robots:
+            distances = [manhattan_distance(robot, box) for box in box_incomplete]
+            score += max(distances)
 
     return score
 
