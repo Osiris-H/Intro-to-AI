@@ -1,5 +1,5 @@
 ###############################################################################
-# This file implements various minimax search agents.
+# This file implements various alpha-beta pruning agents.
 #
 # CSC 384 Fall 2023 Assignment 2
 # version 1.0
@@ -8,19 +8,20 @@ from mancala_game import Board, play_move
 from utils import *
 
 
-def minimax_max_basic(board, curr_player, heuristic_func):
+def alphabeta_max_basic(board, curr_player, alpha, beta, heuristic_func):
     """
-    Perform Minimax Search for MAX player.
+    Perform Alpha-Beta Pruning for MAX player.
     Return the best move and its minimax value.
     If the board is a terminal state, return None as its best move.
 
     :param board: the current board
     :param curr_player: the current player
+    :param alpha: current alpha value
+    :param beta: current beta value
     :param heuristic_func: the heuristic function
-    :return the best move and its minimax value according to minimax search.
+    :return the best move and its minimax value.
     """
 
-    best_value = float('-inf')
     best_move = None
     if is_end(board):
         return best_move, heuristic_func(board, curr_player)
@@ -30,104 +31,113 @@ def minimax_max_basic(board, curr_player, heuristic_func):
         # apply move
         new_board = play_move(board, curr_player, move)
         # evaluate
-        _, value = minimax_min_basic(new_board, get_opponent(curr_player), heuristic_func)
-        if value > best_value:
-            best_value = value
+        _, value = alphabeta_min_basic(new_board, get_opponent(curr_player), alpha, beta, heuristic_func)
+        if value > alpha:
+            alpha = value
             best_move = move
+            if beta <= alpha:
+                break
 
-    return best_move, best_value
+    return best_move, alpha
 
 
-def minimax_min_basic(board, curr_player, heuristic_func):
+def alphabeta_min_basic(board, curr_player, alpha, beta, heuristic_func):
     """
-    Perform Minimax Search for MIN player.
+    Perform Alpha-Beta Pruning for MIN player.
     Return the best move and its minimax value.
     If the board is a terminal state, return None as its best move.
 
     :param board: the current board
-    :param curr_player: the ccurrent player
+    :param curr_player: the current player
+    :param alpha: current alpha value
+    :param beta: current beta value
     :param heuristic_func: the heuristic function
-    :return the best move and its minimax value according to minimax search.
+    :return the best move and its minimax value.
     """
 
+    best_move = None
     if is_end(board):
-        return heuristic_func(board, curr_player)
+        return best_move, heuristic_func(board, get_opponent(curr_player))
 
     moves = board.get_possible_moves(curr_player)
-    best_value = float('-inf')
-    best_move = None
     for move in moves:
         # apply move
         new_board = play_move(board, curr_player, move)
         # evaluate
-        _, value = minimax_max_basic(new_board, get_opponent(curr_player), heuristic_func)
-        if value < best_value:
-            best_value = value
+        _, value = alphabeta_max_basic(new_board, get_opponent(curr_player), alpha, beta, heuristic_func)
+        if value < beta:
+            beta = value
             best_move = move
+            if beta <= alpha:
+                break
 
-    return best_move, best_value
+    return best_move, beta
 
 
-def minimax_max_limit(board, curr_player, heuristic_func, depth_limit):
+def alphabeta_max_limit(board, curr_player, alpha, beta, heuristic_func, depth_limit):
     """
-    Perform Minimax Search for MAX player up to the given depth limit.
+    Perform Alpha-Beta Pruning for MAX player up to the given depth limit.
     Return the best move and its estimated minimax value.
     If the board is a terminal state, return None as its best move.
 
     :param board: the current board
     :param curr_player: the current player
+    :param alpha: current alpha value
+    :param beta: current beta value
     :param heuristic_func: the heuristic function
     :param depth_limit: the depth limit
-    :return the best move and its minimmax value estimated by our heuristic function.
+    :return the best move and its estimated minimax value.
     """
 
     raise NotImplementedError
 
-def minimax_min_limit(board, curr_player, heuristic_func, depth_limit):
+def alphabeta_min_limit(board, curr_player, alpha, beta, heuristic_func, depth_limit):
     """
-    Perform Minimax Search for MIN player  up to the given depth limit.
+    Perform Alpha-Beta Pruning for MIN player up to the given depth limit.
     Return the best move and its estimated minimax value.
     If the board is a terminal state, return None as its best move.
 
     :param board: the current board
-    :param curr_player: the ccurrent player
+    :param curr_player: the current player
+    :param alpha: current alpha value
+    :param beta: current beta value
     :param heuristic_func: the heuristic function
     :param depth_limit: the depth limit
-    :return the best move and its minimmax value estimated by our heuristic function.
+    :return the best move and its estimated minimax value.
     """
 
     raise NotImplementedError
 
-
-def minimax_max_limit_caching(board, curr_player, heuristic_func, depth_limit, cache):
+def alphabeta_max_limit_caching(board, curr_player, alpha, beta, heuristic_func, depth_limit, cache):
     """
-    Perform Minimax Search for MAX player up to the given depth limit with the option of caching states.
-    Return the best move and its minimmax value estimated by our heuristic function.
-    If the board is a terminal state, return None as its best move.
-
-    :param board: the current board
-    :param curr_player: the ccurrent player
-    :param heuristic_func: the heuristic function
-    :param depth_limit: the depth limit
-    :param caching: whether we are caching states.
-    :return the best move and its minimmax value estimated by our heuristic function.
-    """
-
-    raise NotImplementedError
-
-
-def minimax_min_limit_caching(board, curr_player, heuristic_func, depth_limit, cache):
-    """
-    Perform Minimax Search for MIN player up to the given depth limit with the option of caching states.
-    Return the best move and its minimmax value estimated by our heuristic function.
+    Perform Alpha-Beta Pruning for MAX player up to the given depth limit and the option of caching states.
+    Return the best move and its estimated minimax value.
     If the board is a terminal state, return None as its best move.
 
     :param board: the current board
     :param curr_player: the current player
+    :param alpha: current alpha value
+    :param beta: current beta value
     :param heuristic_func: the heuristic function
     :param depth_limit: the depth limit
-    :param caching: whether we are caching states.
-    :return the best move and its minimmax value estimated by our heuristic function.
+    :return the best move and its estimated minimax value.
+    """
+
+    raise NotImplementedError
+
+def alphabeta_min_limit_caching(board, curr_player, alpha, beta, heuristic_func, depth_limit, cache):
+    """
+    Perform Alpha-Beta Pruning for MIN player up to the given depth limit and the option of caching states.
+    Return the best move and its estimated minimax value.
+    If the board is a terminal state, return None as its best move.
+
+    :param board: the current board
+    :param curr_player: the current player
+    :param alpha: current alpha value
+    :param beta: current beta value
+    :param heuristic_func: the heuristic function
+    :param depth_limit: the depth limit
+    :return the best move and its estimated minimax value.
     """
 
     raise NotImplementedError
@@ -149,25 +159,24 @@ def run_ai():
 
     player = int(arguments[0])  # Player color
     limit = int(arguments[1])  # Depth limit
-    caching = int(arguments[2])  # Caching
+    caching = int(arguments[2])  # Depth limit
     hfunc = int(arguments[3]) # Heuristic Function
 
     if (caching == 1): 
         caching = True
+        cache = {}
     else: 
         caching = False
 
-    eprint("Running MINIMAX")
-
+    eprint("Running ALPHA-BETA")
 
     if limit == -1:
         eprint("Depth Limit is OFF")
     else:
-        eprint("Depth Limit is", limit)
+        eprint("Depth Limit is ", limit)
 
     if caching:
         eprint("Caching is ON")
-        cache = {}
     else:
         eprint("Caching is OFF")
 
@@ -193,12 +202,15 @@ def run_ai():
             board = Board(pockets, mancalas)
 
             # Select the move and send it to the manager
+            alpha = float("-Inf")
+            beta = float("Inf")
             if caching:
-                move, value = minimax_max_limit_caching(board, player, heuristic_func, limit, cache)
+                move, value = alphabeta_max_limit_caching(board, player, alpha, beta, heuristic_func, limit, cache)
             elif limit >= 0:
-                move, value = minimax_max_limit(board, player, heuristic_func, limit)
+                move, value = alphabeta_max_limit(board, player, alpha, beta, heuristic_func, limit)
             else:
-                move, value = minimax_max_basic(board, player, heuristic_func)
+                move, value = alphabeta_max_basic(board, player, alpha, beta, heuristic_func)
+
             print("{}".format(move))
 
 
