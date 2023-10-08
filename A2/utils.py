@@ -60,3 +60,7 @@ def heuristic_advanced(board, player):
     """
     
     raise NotImplementedError
+
+
+def is_end(board):
+    return all(val == 0 for val in board.pockets[TOP]) or all(val == 0 for val in board.pockets[BOTTOM])

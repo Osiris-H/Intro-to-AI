@@ -22,7 +22,24 @@ def alphabeta_max_basic(board, curr_player, alpha, beta, heuristic_func):
     :return the best move and its minimax value.
     """
 
-    raise NotImplementedError
+    best_move = None
+    if is_end(board):
+        return best_move, heuristic_func(board, curr_player)
+
+    moves = board.get_possible_moves(curr_player)
+    for move in moves:
+        # apply move
+        new_board = play_move(board, curr_player, move)
+        # evaluate
+        _, value = alphabeta_min_basic(new_board, get_opponent(curr_player), alpha, beta, heuristic_func)
+        if value > alpha:
+            alpha = value
+            best_move = move
+            if beta <= alpha:
+                break
+
+    return best_move, alpha
+
 
 def alphabeta_min_basic(board, curr_player, alpha, beta, heuristic_func):
     """
@@ -38,7 +55,24 @@ def alphabeta_min_basic(board, curr_player, alpha, beta, heuristic_func):
     :return the best move and its minimax value.
     """
 
-    raise NotImplementedError
+    best_move = None
+    if is_end(board):
+        return best_move, heuristic_func(board, curr_player)
+
+    moves = board.get_possible_moves(curr_player)
+    for move in moves:
+        # apply move
+        new_board = play_move(board, curr_player, move)
+        # evaluate
+        _, value = alphabeta_min_basic(new_board, get_opponent(curr_player), alpha, beta, heuristic_func)
+        if value < beta:
+            beta = value
+            best_move = move
+            if beta <= alpha:
+                break
+
+    return best_move, beta
+
 
 def alphabeta_max_limit(board, curr_player, alpha, beta, heuristic_func, depth_limit):
     """

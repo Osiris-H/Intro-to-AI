@@ -8,10 +8,6 @@ from mancala_game import Board, play_move
 from utils import *
 
 
-def is_end(board):
-    return all(val == 0 for val in board.pockets[TOP]) or all(val == 0 for val in board.pockets[BOTTOM])
-
-
 def minimax_max_basic(board, curr_player, heuristic_func):
     """
     Perform Minimax Search for MAX player.
@@ -24,12 +20,12 @@ def minimax_max_basic(board, curr_player, heuristic_func):
     :return the best move and its minimax value according to minimax search.
     """
 
-    if is_end(board):
-        return heuristic_func(board, curr_player)
-
-    moves = board.get_possible_moves(curr_player)
     best_value = float('-inf')
     best_move = None
+    if is_end(board):
+        return best_move, heuristic_func(board, curr_player)
+
+    moves = board.get_possible_moves(curr_player)
     for move in moves:
         # apply move
         new_board = play_move(board, curr_player, move)
@@ -65,7 +61,7 @@ def minimax_min_basic(board, curr_player, heuristic_func):
         new_board = play_move(board, curr_player, move)
         # evaluate
         _, value = minimax_max_basic(new_board, get_opponent(curr_player), heuristic_func)
-        if value > best_value:
+        if value < best_value:
             best_value = value
             best_move = move
 
