@@ -81,7 +81,8 @@ def minimax_max_limit(board, curr_player, heuristic_func, depth_limit):
     :return the best move and its minimmax value estimated by our heuristic function.
     """
 
-    raise NotImplementedError
+    return minimax_max_basic(board, curr_player, heuristic_func)
+
 
 def minimax_min_limit(board, curr_player, heuristic_func, depth_limit):
     """
@@ -90,7 +91,7 @@ def minimax_min_limit(board, curr_player, heuristic_func, depth_limit):
     If the board is a terminal state, return None as its best move.
 
     :param board: the current board
-    :param curr_player: the ccurrent player
+    :param curr_player: the current player
     :param heuristic_func: the heuristic function
     :param depth_limit: the depth limit
     :return the best move and its minimmax value estimated by our heuristic function.

@@ -141,31 +141,23 @@ def dfs(init_board):
     """
 
     visited = set()
-
-    def dfs_helper(state):
-        if is_goal(state):
-            return state
-
-        visited.add(state.board)
-        successors = get_successors(state)
-        for successor in successors:
-            if successor.board not in visited:
-                successor.board.display()
-                result = dfs_helper(successor)
-                if result:
-                    return result
-        return None
-
-    solution = []
-    cost = -1
+    states = []
 
     init_state = State(board=init_board, hfn=heuristic_zero, f=0, depth=0)
-    final_state = dfs_helper(init_state)
-    if final_state:
-        solution = get_path(final_state)
-        cost = final_state.depth
+    states.append(init_state)
 
-    return solution, cost
+    while states:
+        cur = states.pop()
+        if is_goal(cur):
+            return get_path(cur), cur.depth
+
+        visited.add(cur.board)
+        successors = get_successors(cur)
+        for successor in successors:
+            if successor.board not in visited:
+                states.append(successor)
+
+    return [], -1
 
 
 def a_star(init_board, hfn):
@@ -199,6 +191,7 @@ def a_star(init_board, hfn):
         if is_goal(cur):
             solution = get_path(cur)
             cost = cur.depth
+            # print(len(states))
             break
 
         if cur.board in visited and visited[cur.board] <= cur.f:
@@ -207,10 +200,14 @@ def a_star(init_board, hfn):
         visited[cur.board] = cur.f
 
         for successor in get_successors(cur):
-            successor.board.display()
+            # successor.board.display()
             heapq.heappush(states, successor)
 
     return solution, cost
+
+
+def manhattan_distance(p1, p2):
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
 
 def heuristic_basic(board):
@@ -226,11 +223,6 @@ def heuristic_basic(board):
     :return: The heuristic value.
     :rtype: int
     """
-
-    def manhattan_distance(p1, p2):
-        return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
-
-    # TODO: Consider the situation when two boxes have the same distance to a distinct storage point
 
     total_distance = 0
     for box in board.boxes:
@@ -250,21 +242,63 @@ def heuristic_advanced(board):
     :rtype: int
     """
 
-    def manhattan_distance(p1, p2):
-        return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+    def corner_deadlock(box, obs):
+        up = (box[0], box[1] + 1)
+        down = (box[0], box[1] - 1)
+        left = (box[0] - 1, box[1])
+        right = (box[0] + 1, box[1])
+
+        if left in obs and up in obs:
+            return True
+        if right in obs and up in obs:
+            return True
+        if left in obs and down in obs:
+            return True
+        if right in obs and down in obs:
+            return True
+
+        return False
+
+    def dynamic_deadlock(box, boxes, obs):
+        def boxes_next_to_wall(box1, box2, dxdy1, dxdy2):
+            return (box1[0] + dxdy1[0], box1[1] + dxdy1[1]) in obs and \
+                   (box2[0] + dxdy1[0], box2[1] + dxdy1[1]) in obs and \
+                   (box1[0] + dxdy2[0], box1[1] + dxdy2[1]) in obs and \
+                   (box2[0] + dxdy2[0], box2[1] + dxdy2[1]) in obs
+        x, y = box
+        # adjacent boxes against walls
+        if (x + 1, y) in boxes and boxes_next_to_wall(box, (x + 1, y), (-1, 0), (1, 0)):
+            return True
+        if (x, y + 1) in boxes and boxes_next_to_wall(box, (x, y + 1), (0, -1), (0, 1)):
+            return True
+
+        return False
+
+    def deadlock_detection(boxes, obs):
+        for box in boxes:
+            if corner_deadlock(box, obs):
+                return True
+            if dynamic_deadlock(box, boxes, obs):
+                return True
+
+        return False
 
     box_incomplete = [box for box in board.boxes if box not in board.storage]
     storage_incomplete = [storage for storage in board.storage if storage not in board.boxes]
+    obstacles = board.obstacles
+
+    if deadlock_detection(box_incomplete, obstacles):
+        return float('inf')
 
     score = 0
-    if len(box_incomplete) is not 0:
+    if len(box_incomplete) != 0 and len(storage_incomplete) != 0:
         for box in box_incomplete:
             distances = [manhattan_distance(box, storage) for storage in storage_incomplete]
             score += min(distances)
 
         for robot in board.robots:
             distances = [manhattan_distance(robot, box) for box in box_incomplete]
-            score += max(distances)
+            score += min(distances)
 
     return score
 
@@ -356,8 +390,9 @@ if __name__ == "__main__":
     )
 
     # TODO: deleted before submission
-    arg_list = ['--algorithm', 'a_star', '--heuristic', 'basic', '--inputfile', 'sokoban.txt', '--outputfile',
-                'solution2.txt']
+    arg_list = ['--algorithm', 'dfs', '--inputfile', 'sokoban.txt', '--outputfile', 'solution.txt']
+    # arg_list = ['--algorithm', 'a_star', '--heuristic', 'advanced', '--inputfile', 'sokoban.txt', '--outputfile',
+    #             'solution.txt']
     args = parser.parse_args(arg_list)
 
     # args = parser.parse_args()
