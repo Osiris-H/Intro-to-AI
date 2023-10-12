@@ -390,12 +390,12 @@ if __name__ == "__main__":
     )
 
     # TODO: deleted before submission
-    arg_list = ['--algorithm', 'dfs', '--inputfile', 'sokoban.txt', '--outputfile', 'solution.txt']
+    # arg_list = ['--algorithm', 'dfs', '--inputfile', 'sokoban.txt', '--outputfile', 'solution.txt']
     # arg_list = ['--algorithm', 'a_star', '--heuristic', 'advanced', '--inputfile', 'sokoban.txt', '--outputfile',
     #             'solution.txt']
-    args = parser.parse_args(arg_list)
+    # args = parser.parse_args(arg_list)
 
-    # args = parser.parse_args()
+    args = parser.parse_args()
 
     # set the heuristic function
     heuristic = heuristic_zero
