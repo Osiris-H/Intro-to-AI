@@ -144,7 +144,27 @@ def minimax_max_limit_caching(board, curr_player, heuristic_func, depth_limit, c
     :return the best move and its minimmax value estimated by our heuristic function.
     """
 
-    raise NotImplementedError
+    best_value = float('-inf')
+    best_move = None
+    if is_end(board) or depth_limit == 0:
+        return best_move, heuristic_func(board, curr_player)
+
+    if board in cache and cache[board]['depth'] >= depth_limit:
+        return cache[board]['move'], cache[board]['value']
+
+    moves = board.get_possible_moves(curr_player)
+    for move in moves:
+        # apply move
+        new_board = play_move(board, curr_player, move)
+        # evaluate
+        _, value = minimax_min_limit_caching(new_board, get_opponent(curr_player), heuristic_func, depth_limit-1, cache)
+        if value > best_value:
+            best_value = value
+            best_move = move
+    if board not in cache or cache[board]['depth'] <= depth_limit:
+        cache[board] = {'depth': depth_limit, 'move': best_move, 'value': best_value}
+
+    return best_move, best_value
 
 
 def minimax_min_limit_caching(board, curr_player, heuristic_func, depth_limit, cache):
@@ -161,7 +181,27 @@ def minimax_min_limit_caching(board, curr_player, heuristic_func, depth_limit, c
     :return the best move and its minimmax value estimated by our heuristic function.
     """
 
-    raise NotImplementedError
+    best_value = float('inf')
+    best_move = None
+    if is_end(board) or depth_limit == 0:
+        return best_move, heuristic_func(board, get_opponent(curr_player))
+
+    if board in cache and cache[board]['depth'] >= depth_limit:
+        return cache[board]['move'], cache[board]['value']
+
+    moves = board.get_possible_moves(curr_player)
+    for move in moves:
+        # apply move
+        new_board = play_move(board, curr_player, move)
+        # evaluate
+        _, value = minimax_max_limit_caching(new_board, get_opponent(curr_player), heuristic_func, depth_limit-1, cache)
+        if value < best_value:
+            best_value = value
+            best_move = move
+    if board not in cache or cache[board]['depth'] <= depth_limit:
+        cache[board] = {'depth': depth_limit, 'move': best_move, 'value': best_value}
+
+    return best_move, best_value
 
 
 ###############################################################################
