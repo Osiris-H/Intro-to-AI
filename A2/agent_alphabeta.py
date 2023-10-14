@@ -23,6 +23,7 @@ def alphabeta_max_basic(board, curr_player, alpha, beta, heuristic_func):
     """
 
     best_move = None
+    best_value = float('-inf')
     if is_end(board):
         return best_move, heuristic_func(board, curr_player)
 
@@ -32,13 +33,15 @@ def alphabeta_max_basic(board, curr_player, alpha, beta, heuristic_func):
         new_board = play_move(board, curr_player, move)
         # evaluate
         _, value = alphabeta_min_basic(new_board, get_opponent(curr_player), alpha, beta, heuristic_func)
-        if value > alpha:
-            alpha = value
+        if value > best_value:
+            best_value = value
             best_move = move
-            if beta <= alpha:
-                break
+            if best_value > alpha:
+                alpha = best_value
+                if beta <= alpha:
+                    break
 
-    return best_move, alpha
+    return best_move, best_value
 
 
 def alphabeta_min_basic(board, curr_player, alpha, beta, heuristic_func):
@@ -56,6 +59,7 @@ def alphabeta_min_basic(board, curr_player, alpha, beta, heuristic_func):
     """
 
     best_move = None
+    best_value = float('inf')
     if is_end(board):
         return best_move, heuristic_func(board, get_opponent(curr_player))
 
@@ -65,13 +69,15 @@ def alphabeta_min_basic(board, curr_player, alpha, beta, heuristic_func):
         new_board = play_move(board, curr_player, move)
         # evaluate
         _, value = alphabeta_max_basic(new_board, get_opponent(curr_player), alpha, beta, heuristic_func)
-        if value < beta:
-            beta = value
+        if value < best_value:
+            best_value = value
             best_move = move
-            if beta <= alpha:
-                break
+            if best_value < alpha:
+                alpha = best_value
+                if beta <= alpha:
+                    break
 
-    return best_move, beta
+    return best_move, best_value
 
 
 def alphabeta_max_limit(board, curr_player, alpha, beta, heuristic_func, depth_limit):
@@ -90,6 +96,7 @@ def alphabeta_max_limit(board, curr_player, alpha, beta, heuristic_func, depth_l
     """
 
     best_move = None
+    best_value = float('-inf')
     if is_end(board) or depth_limit == 0:
         return best_move, heuristic_func(board, curr_player)
 
@@ -99,13 +106,15 @@ def alphabeta_max_limit(board, curr_player, alpha, beta, heuristic_func, depth_l
         new_board = play_move(board, curr_player, move)
         # evaluate
         _, value = alphabeta_min_limit(new_board, get_opponent(curr_player), alpha, beta, heuristic_func, depth_limit-1)
-        if value > alpha:
-            alpha = value
+        if value > best_value:
+            best_value = value
             best_move = move
-            if beta <= alpha:
-                break
+            if best_value > alpha:
+                alpha = best_value
+                if beta <= alpha:
+                    break
 
-    return best_move, alpha
+    return best_move, best_value
 
 
 def alphabeta_min_limit(board, curr_player, alpha, beta, heuristic_func, depth_limit):
@@ -124,6 +133,7 @@ def alphabeta_min_limit(board, curr_player, alpha, beta, heuristic_func, depth_l
     """
 
     best_move = None
+    best_value = float('inf')
     if is_end(board) or depth_limit == 0:
         return best_move, heuristic_func(board, get_opponent(curr_player))
 
@@ -133,13 +143,15 @@ def alphabeta_min_limit(board, curr_player, alpha, beta, heuristic_func, depth_l
         new_board = play_move(board, curr_player, move)
         # evaluate
         _, value = alphabeta_max_limit(new_board, get_opponent(curr_player), alpha, beta, heuristic_func, depth_limit-1)
-        if value < beta:
-            beta = value
+        if value < best_value:
+            best_value = value
             best_move = move
-            if beta <= alpha:
-                break
+            if best_value < alpha:
+                alpha = best_value
+                if beta <= alpha:
+                    break
 
-    return best_move, beta
+    return best_move, best_value
 
 
 def alphabeta_max_limit_caching(board, curr_player, alpha, beta, heuristic_func, depth_limit, cache):
