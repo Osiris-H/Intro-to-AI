@@ -186,9 +186,10 @@ def main():
     else:
         p2 = Player(BOTTOM)
         
-    game = MancalaGameManager(args.dimension, args.initialBoard)
+    game = MancalaGameManager(args.dimension, args.initialBoard, current_player=BOTTOM)
     gui = MancalaCommandLine(game, p1, p2) 
     gui.run()
+
 
 if __name__ == "__main__":
     main()
