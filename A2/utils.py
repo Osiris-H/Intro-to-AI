@@ -65,8 +65,27 @@ def heuristic_advanced(board, player):
     :param player: the current player.
     :return: an estimated heuristic value of the current board for the current player.
     """
-    
-    raise NotImplementedError
+
+    # Strategies to follow:
+    # Minimize Opponent's Non-Empty Pockets
+    # Maximize even distribution
+
+    def store_diff(board, player):
+        return heuristic_basic(board, player)
+
+    def non_empty_pockets(board, player):
+        player_non_empty = sum(1 for pocket in board[player].pockets if pocket > 0)
+        opp_non_empty = sum(1 for pocket in board[get_opponent(player)].pockets if pocket > 0)
+        return player_non_empty - opp_non_empty
+
+    def even_distribute(board, player):
+        mean = sum(board[player].pockets) / len(board[player].pockets)
+        variance = sum((pocket - mean) ** 2 for pocket in board[player].pockets) / len(board[player].pockets)
+        return -variance
+
+    w1, w2, w3 = 10, 4, 2
+    score = w1*store_diff(board, player) + w2*non_empty_pockets(board, player) + w3*even_distribute(board, player)
+    return score
 
 
 def is_end(board):
