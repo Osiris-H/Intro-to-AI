@@ -151,9 +151,9 @@ def minimax_max_limit_caching(board, curr_player, heuristic_func, depth_limit, c
 
     state_key = (board, curr_player)
     if state_key in cache:
-        if depth_limit and cache[state_key]['depth'] >= depth_limit:
+        if depth_limit == -1:
             return cache[state_key]['move'], cache[state_key]['value']
-        elif depth_limit is None:
+        elif cache[state_key]['depth'] >= depth_limit:
             return cache[state_key]['move'], cache[state_key]['value']
 
     moves = board.get_possible_moves(curr_player)
@@ -161,7 +161,8 @@ def minimax_max_limit_caching(board, curr_player, heuristic_func, depth_limit, c
         # apply move
         new_board = play_move(board, curr_player, move)
         # evaluate
-        _, value = minimax_min_limit_caching(new_board, get_opponent(curr_player), heuristic_func, depth_limit-1, cache)
+        _, value = minimax_min_limit_caching(new_board, get_opponent(curr_player), heuristic_func,
+                                             depth_limit-1 if depth_limit != -1 else -1, cache)
         if value > best_value:
             best_value = value
             best_move = move
@@ -193,9 +194,9 @@ def minimax_min_limit_caching(board, curr_player, heuristic_func, depth_limit, c
     state_key = (board, curr_player)
 
     if state_key in cache:
-        if depth_limit and cache[state_key]['depth'] >= depth_limit:
+        if depth_limit == -1:
             return cache[state_key]['move'], cache[state_key]['value']
-        elif depth_limit is None:
+        elif cache[state_key]['depth'] >= depth_limit:
             return cache[state_key]['move'], cache[state_key]['value']
 
     moves = board.get_possible_moves(curr_player)
@@ -203,7 +204,8 @@ def minimax_min_limit_caching(board, curr_player, heuristic_func, depth_limit, c
         # apply move
         new_board = play_move(board, curr_player, move)
         # evaluate
-        _, value = minimax_max_limit_caching(new_board, get_opponent(curr_player), heuristic_func, depth_limit-1, cache)
+        _, value = minimax_max_limit_caching(new_board, get_opponent(curr_player), heuristic_func,
+                                             depth_limit-1 if depth_limit != -1 else -1, cache)
         if value < best_value:
             best_value = value
             best_move = move
