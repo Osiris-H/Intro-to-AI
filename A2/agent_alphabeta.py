@@ -24,7 +24,8 @@ def alphabeta_max_basic(board, curr_player, alpha, beta, heuristic_func):
 
     best_move = None
     best_value = float('-inf')
-    if is_end(board):
+    if is_end(board, curr_player):
+        # board.draw_board()
         return best_move, heuristic_func(board, curr_player)
 
     moves = board.get_possible_moves(curr_player)
@@ -60,7 +61,7 @@ def alphabeta_min_basic(board, curr_player, alpha, beta, heuristic_func):
 
     best_move = None
     best_value = float('inf')
-    if is_end(board):
+    if is_end(board, curr_player):
         return best_move, heuristic_func(board, get_opponent(curr_player))
 
     moves = board.get_possible_moves(curr_player)
@@ -72,8 +73,8 @@ def alphabeta_min_basic(board, curr_player, alpha, beta, heuristic_func):
         if value < best_value:
             best_value = value
             best_move = move
-            if best_value < alpha:
-                alpha = best_value
+            if best_value < beta:
+                beta = best_value
                 if beta <= alpha:
                     break
 
@@ -146,8 +147,8 @@ def alphabeta_min_limit(board, curr_player, alpha, beta, heuristic_func, depth_l
         if value < best_value:
             best_value = value
             best_move = move
-            if best_value < alpha:
-                alpha = best_value
+            if best_value < beta:
+                beta = best_value
                 if beta <= alpha:
                     break
 
@@ -239,8 +240,8 @@ def alphabeta_min_limit_caching(board, curr_player, alpha, beta, heuristic_func,
         if value < best_value:
             best_value = value
             best_move = move
-            if best_value < alpha:
-                alpha = best_value
+            if best_value < beta:
+                beta = best_value
                 if beta <= alpha:
                     break
     if state_key not in cache or cache[state_key]['depth'] <= depth_limit:

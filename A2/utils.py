@@ -47,12 +47,7 @@ def heuristic_basic(board, player):
 
     player_score = board.mancalas[player]
     opp_score = board.mancalas[get_opponent(player)]
-    # consider the case when game is end
-    # if is_end(board):
-    #     if any(board.pockets[player]):
-    #         player_score += next(x for x in board.pockets[player] if x != 0)
-    #     elif any(board.pockets[get_opponent(player)]):
-    #         opp_score += next(x for x in board.pockets[get_opponent(player)] if x != 0)
+
     return player_score - opp_score
 
 
