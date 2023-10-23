@@ -91,7 +91,8 @@ def minimax_max_limit(board, curr_player, heuristic_func, depth_limit):
         # apply move
         new_board = play_move(board, curr_player, move)
         # evaluate
-        _, value = minimax_min_limit(new_board, get_opponent(curr_player), heuristic_func, depth_limit-1)
+        _, value = minimax_min_limit(new_board, get_opponent(curr_player), heuristic_func,
+                                     depth_limit-1 if depth_limit != -1 else -1)
         if value > best_value:
             best_value = value
             best_move = move
@@ -122,7 +123,8 @@ def minimax_min_limit(board, curr_player, heuristic_func, depth_limit):
         # apply move
         new_board = play_move(board, curr_player, move)
         # evaluate
-        _, value = minimax_max_limit(new_board, get_opponent(curr_player), heuristic_func, depth_limit-1)
+        _, value = minimax_max_limit(new_board, get_opponent(curr_player), heuristic_func,
+                                     depth_limit-1 if depth_limit != -1 else -1)
         if value < best_value:
             best_value = value
             best_move = move
