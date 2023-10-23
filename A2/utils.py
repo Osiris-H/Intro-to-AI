@@ -68,18 +68,56 @@ def heuristic_advanced(board, player):
     def store_diff(board, player):
         return heuristic_basic(board, player)
 
-    def non_empty_pockets(board, player):
-        player_non_empty = sum(1 for pocket in board[player].pockets if pocket > 0)
-        opp_non_empty = sum(1 for pocket in board[get_opponent(player)].pockets if pocket > 0)
-        return player_non_empty - opp_non_empty
+    def potential_captures(board, player):
+        curr_pocket = board.pockets[player]
+        opp_pocket = board.pockets[get_opponent(player)]
+        score = 0
+        count = 0
+        for i, value in enumerate(curr_pocket):
+            if player == TOP:
+                if value != 0 and i-value >= 0 and curr_pocket[i-value] == 0:
+                    count += 1
+                    score += opp_pocket[i-value]
+            else:
+                if value != 0 and i+value <= len(curr_pocket)-1 and curr_pocket[i+value] == 0:
+                    count += 1
+                    score += opp_pocket[i+value]
+        if score != 0:
+            score /= count
+        return score
+
+    def empty_pockets(board, player):
+        player_empty = sum(1 for value in board.pockets[player] if value == 0)
+        opp_empty = sum(1 for value in board.pockets[get_opponent(player)] if value == 0)
+        return opp_empty - player_empty
+
+    def game_phase(board):
+        store_val = sum(board.mancalas)
+        pocket_val = sum(sum(pocket) for pocket in board.pockets)
+        total = store_val + pocket_val
+        if pocket_val >= 3 * total / 4:
+            return 0  # opening
+        elif pocket_val >= total / 4:
+            return 1  # mid-game
+        else:
+            return 2  # end-game
 
     def even_distribute(board, player):
-        mean = sum(board[player].pockets) / len(board[player].pockets)
-        variance = sum((pocket - mean) ** 2 for pocket in board[player].pockets) / len(board[player].pockets)
+        mean = sum(board.pockets[player]) / len(board.pockets[player])
+        variance = sum((pocket - mean) ** 2 for pocket in board.pockets[player]) / len(board.pockets[player])
         return -variance
 
-    w1, w2, w3 = 10, 4, 2
-    score = w1*store_diff(board, player) + w2*non_empty_pockets(board, player) + w3*even_distribute(board, player)
+    stage = game_phase(board)
+    # stage = 2
+    if stage == 0:
+        w1, w2, w3 = 1, 0.5, 1
+    elif stage == 1:
+        w1, w2, w3 = 1, 1, 1.5
+    else:
+        w1, w2, w3 = 1, 1, 2
+    # total = w1 + w2 + w3
+    # w1, w2, w3 = w1 / total, w2 / total, w3 / total
+    score = w1*store_diff(board, player) + w2*empty_pockets(board, player) + w3*potential_captures(board, player)
     return score
 
 
