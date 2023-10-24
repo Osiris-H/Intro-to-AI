@@ -112,7 +112,7 @@ def heuristic_advanced(board, player):
     if stage == 0:
         w1, w2, w3 = 1, 0.5, 1
     elif stage == 1:
-        w1, w2, w3 = 1, 1, 1.5
+        w1, w2, w3 = 1, 0.75, 1.5
     else:
         w1, w2, w3 = 1, 1, 2
     # total = w1 + w2 + w3
