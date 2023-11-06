@@ -54,8 +54,7 @@ def create_initial_domain(dim):
     :rtype: List[int]
     """
 
-    raise NotImplementedError
-
+    return list(range(1, dim + 1))
 
 
 def create_variables(dim):
@@ -71,7 +70,7 @@ def create_variables(dim):
     :rtype: List[Variables]
     """
 
-    raise NotImplementedError
+    return [f"Var({row}, {col})" for row in range(1, dim+1) for col in range(1, dim+1)]
 
     
 def satisfying_tuples_difference_constraints(dim):
@@ -85,7 +84,8 @@ def satisfying_tuples_difference_constraints(dim):
     :rtype: List[(int,int)]
     """
 
-    raise NotImplementedError
+    return [(i, j) for i in range(1, dim + 1) for j in range(1, dim + 1)
+            if abs(i - j) > 1 and i != 2 * j and j != 2 * i]
   
   
 def satisfying_tuples_white_dots(dim):
@@ -99,7 +99,8 @@ def satisfying_tuples_white_dots(dim):
     :rtype: List[(int,int)]
     """
 
-    raise NotImplementedError
+    return [(i, j) for i in range(1, dim+1) for j in range(1, dim+1) if abs(i - j) == 1]
+
   
 def satisfying_tuples_black_dots(dim):
     """
@@ -112,8 +113,9 @@ def satisfying_tuples_black_dots(dim):
     :rtype: List[(int,int)]
     """
 
-    raise NotImplementedError
-    
+    return [(i, j) for i in range(1, dim+1) for j in range(1, dim+1) if i == 2*j or j == 2*i]
+
+
 def create_row_and_col_constraints(dim, sat_tuples, variables):
     """
     Create and return a list of binary all-different row/column constraints.
