@@ -84,8 +84,7 @@ def satisfying_tuples_difference_constraints(dim):
     :rtype: List[(int,int)]
     """
 
-    return [(i, j) for i in range(1, dim + 1) for j in range(1, dim + 1)
-            if abs(i - j) > 1 and i != 2 * j and j != 2 * i]
+    return [(i, j) for i in range(1, dim + 1) for j in range(1, dim + 1) if i != j]
   
   
 def satisfying_tuples_white_dots(dim):
