@@ -186,9 +186,14 @@ def main():
     else:
         p2 = Player(BOTTOM)
         
-    game = MancalaGameManager(args.dimension, args.initialBoard, current_player=BOTTOM)
-    gui = MancalaCommandLine(game, p1, p2) 
+    game = MancalaGameManager(args.dimension, args.initialBoard, current_player=TOP)
+    gui = MancalaCommandLine(game, p1, p2)
+    import time
+    start = time.time()
     gui.run()
+    end = time.time()
+    execution_time = end - start
+    print(print(f"Execution time: {execution_time} seconds"))
 
 
 if __name__ == "__main__":
