@@ -10,6 +10,7 @@
 from board import *
 from cspbase import *
 
+
 def kropki_model(board):
     """
     Create a CSP for a Kropki Sudoku Puzzle given a board of dimension.
@@ -38,10 +39,25 @@ def kropki_model(board):
 
     """
 
-    raise NotImplementedError
+    dim = board.dimension
+    variables = create_variables(dim)
+    for var in variables:
+        var.add_domain_values(create_variables(dim))
+    csp = CSP("CSP", variables)
+
+    constraints = []
+    sat_tuples = satisfying_tuples_difference_constraints(dim)
+    sat_tuples_w = satisfying_tuples_white_dots(dim)
+    sat_tuples_b = satisfying_tuples_black_dots(dim)
+    constraints.extend(create_row_and_col_constraints(dim, sat_tuples, variables))
+    constraints.extend(create_cage_constraints(dim, sat_tuples, variables))
+    constraints.extend(create_dot_constraints(dim, board.dots, sat_tuples_w, sat_tuples_b, variables))
+    for const in constraints:
+        csp.add_constraint(const)
+
+    return csp, [variables[i*dim: (i+1)*dim] for i in range(dim)]
     
-    
-    
+
 def create_initial_domain(dim):
     """
     Return a list of values for the initial domain of any unassigned variable.
@@ -132,8 +148,31 @@ def create_row_and_col_constraints(dim, sat_tuples, variables):
     :returns: A list of binary all-different constraints
     :rtype: List[Constraint]
     """
-    
-    raise NotImplementedError
+
+    constraints = []
+    # Constraints for rows
+    for i in range(dim):
+        for j in range(dim):
+            for k in range(j + 1, dim):
+                var1 = variables[i * dim + j]
+                var2 = variables[i * dim + k]
+                name = f"Row{i}_{var1.name}_{var2.name}"
+                constraint = Constraint(name, [var1, var2])
+                constraint.add_satisfying_tuples(sat_tuples)
+                constraints.append(constraint)
+
+    # Constraints for columns
+    for j in range(dim):
+        for i in range(dim):
+            for k in range(i + 1, dim):
+                var1 = variables[i * dim + j]
+                var2 = variables[k * dim + j]
+                name = f"Col{j}_{var1.name}_{var2.name}"
+                constraint = Constraint(name, [var1, var2])
+                constraint.add_satisfying_tuples(sat_tuples)
+                constraints.append(constraint)
+
+    return constraints
     
     
 def create_cage_constraints(dim, sat_tuples, variables):
@@ -154,8 +193,30 @@ def create_cage_constraints(dim, sat_tuples, variables):
     :rtype: List[Constraint]
     """
 
-    raise NotImplementedError
-    
+    def pairwise_cage_constraints(indices, sat_tuples, variables):
+        constraints = []
+        for index1 in range(len(indices)):
+            for index2 in range(index1 + 1, len(indices)):
+                var1 = variables[indices[index1]]
+                var2 = variables[indices[index2]]
+                const_name = f"Cage_{var1.name}_{var2.name}"
+                constraint = Constraint(const_name, [var1, var2])
+                constraint.add_satisfying_tuples(sat_tuples)
+                constraints.append(constraint)
+        return constraints
+
+    constraints = []
+    subgrid_rows, subgrid_cols = (3, 2) if dim == 6 else (3, 3)
+
+    for cage_row in range(0, dim, subgrid_rows):
+        for cage_col in range(0, dim, subgrid_cols):
+            indices = [(i * dim + j) for i in range(cage_row, cage_row + subgrid_rows)
+                       for j in range(cage_col, cage_col + subgrid_cols)]
+            constraints.extend(pairwise_cage_constraints(indices, sat_tuples, variables))
+
+    return constraints
+
+
 def create_dot_constraints(dim, dots, white_tuples, black_tuples, variables):
     """
     Create and return a list of binary constraints, one for each dot.
@@ -181,5 +242,34 @@ def create_dot_constraints(dim, dots, white_tuples, black_tuples, variables):
     :rtype: List[Constraint]
     """
 
-    raise NotImplementedError
+    constraints = []
+    for dot in dots:
+        # find the two variables affected by the dot
+        var1_name = f"Var({dot.cell_row}, {dot.cell_col})"
+        if dot.location:
+            var2_name = f"Var({dot.cell_row}, {dot.cell_col+1})"
+        else:
+            var2_name = f"Var({dot.cell_row+1}, {dot.cell_col})"
+        var1 = None
+        var2 = None
+        for variable in variables:
+            if variable.name == var1_name:
+                var1 = variable
+            elif variable.name == var2_name:
+                var2 = variable
+            if var1 is not None and var2 is not None:
+                break
+        assert var1 is not None and var2 is not None, "Variables not Found"
+
+        if dot.color == CHAR_WHITE:
+            const_name = f"Dot_W({dot.cell_row}, {dot.cell_col})"
+            constraint = Constraint(const_name, [var1, var2])
+            constraint.add_satisfying_tuples(white_tuples)
+        else:
+            const_name = f"Dot_B({dot.cell_row}, {dot.cell_col})"
+            constraint = Constraint(const_name, [var1, var2])
+            constraint.add_satisfying_tuples(black_tuples)
+        constraints.append(constraint)
+
+    return constraints
 
