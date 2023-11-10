@@ -37,17 +37,17 @@ def prop_FC(csp, last_assigned_var=None):
 
     def check_domain_empty(variables):
         for var in variables:
-            if not any(var.curdom):
+            if var.cur_domain_size() == 0:
                 return True
         return False
 
     def check_arc_constraint(var, var_list, value, sup_tuples):
         for sup_tuple in sup_tuples:
-            for idx, val in enumerate(sup_tuple[1:]):
-                if not var_list[idx].in_cur_domain(val):
-                    var.prune_value(value)
-                    return var, value
-        return None
+            if all(var_list[idx].in_cur_domain(val) for idx, val in enumerate(sup_tuple)):
+                return None
+
+        var.prune_value(value)
+        return var, value
 
     pruned_list = []
 
@@ -65,10 +65,9 @@ def prop_FC(csp, last_assigned_var=None):
         for const in constraints:
             var = const.scope[0]
             for value in var.cur_domain():
-                pruned_tuple = check_arc_constraint(var, const.scope[1:], value, const.sup_tuples[(var, value)][1:])
+                pruned_tuple = check_arc_constraint(var, const.scope, value, const.sup_tuples[(var, value)])
                 if pruned_tuple is not None:
                     pruned_list.append(pruned_tuple)
-
 
     return not check_domain_empty(csp.vars), pruned_list
 
@@ -103,11 +102,11 @@ def prop_AC3(csp, last_assigned_var=None):
 
     def revise(var, var_list, value, sup_tuples):
         for sup_tuple in sup_tuples:
-            for idx, val in enumerate(sup_tuple[1:]):
-                if not var_list[idx].in_cur_domain(val):
-                    var.prune_value(value)
-                    return var, value
-        return None
+            if all(var_list[idx].in_cur_domain(val) for idx, val in enumerate(sup_tuple)):
+                return None
+
+        var.prune_value(value)
+        return var, value
 
     pruned_list = []
 
@@ -118,15 +117,17 @@ def prop_AC3(csp, last_assigned_var=None):
 
     while constraints:
         const = constraints.pop(0)
-        var = const.scope[0]
-        for value in var.cur_domain():
-            pruned_tuple = revise(var, const.scope[1:], value, const.sup_tuples[(var, value)][1:])
-            # domain reduced, add arcs affected
-            if pruned_tuple is not None:
-                pruned_list.append(pruned_tuple)
-                if var.cur_domain_size() == 0:
-                    return False, pruned_list
-                constraints.extend(csp.get_cons_with_var(var))
+        for var in const.scope:
+            for value in var.cur_domain():
+                pruned_tuple = revise(var, const.scope, value, const.sup_tuples[(var, value)])
+                # domain reduced, add arcs affected
+                if pruned_tuple is not None:
+                    pruned_list.append(pruned_tuple)
+                    if var.cur_domain_size() == 0:
+                        return False, pruned_list
+                    for other_const in csp.get_cons_with_var(var):
+                        if other_const not in constraints:
+                            constraints.append(other_const)
 
     return True, pruned_list
 
