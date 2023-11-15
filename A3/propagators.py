@@ -126,7 +126,7 @@ def prop_AC3(csp, last_assigned_var=None):
                     if var.cur_domain_size() == 0:
                         return False, pruned_list
                     for other_const in csp.get_cons_with_var(var):
-                        if other_const not in constraints:
+                        if other_const != const and other_const not in constraints:
                             constraints.append(other_const)
 
     return True, pruned_list
@@ -146,7 +146,18 @@ def ord_mrv(csp):
 
     """
 
-    raise NotImplementedError
+    variables = csp.vars
+    target = None
+    min_size = float('inf')
+    for var in variables:
+        if not var.is_assigned():
+            size = var.cur_domain_size()
+            if size < min_size:
+                target = var
+                min_size = size
+
+    return target
+
 
 
 ###############################################################################
