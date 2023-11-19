@@ -41,8 +41,17 @@ def kropki_model(board):
 
     dim = board.dimension
     variables = create_variables(dim)
-    for var in variables:
-        var.add_domain_values(create_variables(dim))
+
+    for i in range(dim):
+        for j in range(dim):
+            var = variables[i * dim + j]
+            val = board.cells[i][j]
+            if val != 0:
+                var.add_domain_values([val])
+                var.assign(val)
+            else:
+                var.add_domain_values(create_initial_domain(dim))
+
     csp = CSP("CSP", variables)
 
     constraints = []
@@ -86,7 +95,13 @@ def create_variables(dim):
     :rtype: List[Variables]
     """
 
-    return [f"Var({row}, {col})" for row in range(1, dim+1) for col in range(1, dim+1)]
+    variables = []
+    for row in range(0, dim):
+        for col in range(0, dim):
+            name = f"Var({row}, {col})"
+            var = Variable(name)
+            variables.append(var)
+    return variables
 
     
 def satisfying_tuples_difference_constraints(dim):

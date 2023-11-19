@@ -9,6 +9,7 @@
 ############################################################
 
 import argparse
+import time
 
 from board import *
 from cspmodel import *
@@ -114,12 +115,16 @@ if __name__ == "__main__":
     
     solver = BT(csp)
 
+    start = time.time()
     if args.heuristic:
         print("Using the MRV heuristic")
         solver.bt_search(prop, ord_mrv)
     else:
         print("NOT using the MRV heuristic")
         solver.bt_search(prop)
+
+    end = time.time()
+    print(f"Execution time: {end-start} s")
 
     # fill the board with the variables' assigned values.
     for row in range(board.dimension):
