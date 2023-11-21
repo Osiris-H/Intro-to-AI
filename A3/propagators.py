@@ -46,20 +46,24 @@ def prop_FC(csp, last_assigned_var=None):
     pruned_list = []
 
     if last_assigned_var is None:
-        constraints = csp.cons
+        constraints = [const for const in csp.cons if const.get_num_unassigned_vars() == 1]
     else:
         constraints = [const for const in csp.get_cons_with_var(last_assigned_var)
                        if const.get_num_unassigned_vars() == 1]
 
     for const in constraints:
-        var = const.scope[0] if last_assigned_var is None else const.get_unassigned_vars()[0]
+        var = const.get_unassigned_vars()[0]
         for value in var.cur_domain():
             if (var, value) in const.sup_tuples:
                 pruned_tuple = check_arc_constraint(var, const.scope, value, const.sup_tuples[(var, value)])
-                if pruned_tuple is not None:
-                    pruned_list.append(pruned_tuple)
-                    if var.cur_domain_size() == 0:
-                        return False, pruned_list
+            else:
+                var.prune_value(value)
+                pruned_tuple = (var, value)
+
+            if pruned_tuple is not None:
+                pruned_list.append(pruned_tuple)
+                if var.cur_domain_size() == 0:
+                    return False, pruned_list
 
     return True, pruned_list
 
@@ -113,14 +117,17 @@ def prop_AC3(csp, last_assigned_var=None):
             for value in var.cur_domain():
                 if (var, value) in const.sup_tuples:
                     pruned_tuple = revise(var, const.scope, value, const.sup_tuples[(var, value)])
-                    # domain reduced, add arcs affected
-                    if pruned_tuple is not None:
-                        pruned_list.append(pruned_tuple)
-                        if var.cur_domain_size() == 0:
-                            return False, pruned_list
-                        for other_const in csp.get_cons_with_var(var):
-                            if other_const != const and other_const not in constraints:
-                                constraints.append(other_const)
+                else:
+                    var.prune_value(value)
+                    pruned_tuple = (var, value)
+
+                if pruned_tuple is not None:
+                    pruned_list.append(pruned_tuple)
+                    if var.cur_domain_size() == 0:
+                        return False, pruned_list
+                    for other_const in csp.get_cons_with_var(var):
+                        if other_const != const and other_const not in constraints:
+                            constraints.append(other_const)
 
     return True, pruned_list
 
