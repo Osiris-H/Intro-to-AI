@@ -1,3 +1,5 @@
 *.zip
 *.txt
+*.csv
 /A1/solve_starter.py
+/test.py
