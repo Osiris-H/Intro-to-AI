@@ -17,8 +17,8 @@ def generate_combs(scope):
 
     combinations = []
     for val in scope[0].domain():
-        for sub_combs in sub_combs:
-            combined_comb = [val] + sub_combs
+        for sub_comb in sub_combs:
+            combined_comb = [val] + sub_comb
             combinations.append(combined_comb)
 
     return combinations
@@ -33,7 +33,7 @@ def normalize(factor):
     :return: a new Factor object resulting from normalizing factor.
     '''
 
-    norm_factor = Factor(factor.name, factor.scope)
+    norm_factor = Factor(factor.name, factor.get_scope())
     total_sum = sum(factor.values)
     assert total_sum != 0, "Sum of probabilities is zero."
     norm_values = [value / total_sum for value in factor.values]
@@ -53,10 +53,16 @@ def restrict(factor, variable, value):
              This new factor no longer has variable in it.
     ''' 
 
-    new_scope = [v for v in factor.scope if v != variable]
+    new_scope = []
+    idx = None
+    for var in factor.get_scope():
+        if var.name == variable.name:
+            idx = factor.scope.index(var)
+        else:
+            new_scope.append(var)
+    assert idx is not None, f"{variable.name} not in scope."
     new_factor = Factor(f"Res_{factor.name}_{variable.name}", new_scope)
-    idx = factor.scope.index(variable)
-    combinations = generate_combs(factor.scope)
+    combinations = generate_combs(factor.get_scope())
 
     new_values = []
     for comb in combinations:
@@ -78,9 +84,16 @@ def sum_out(factor, variable):
              This new factor no longer has variable in it.
     '''       
 
-    new_scope = [v for v in factor.scope if v != variable]
+    new_scope = []
+    idx = None
+    for var in factor.get_scope():
+        if var.name == variable.name:
+            idx = factor.scope.index(var)
+        else:
+            new_scope.append(var)
+    assert idx is not None, f"{variable.name} not in scope."
+
     new_factor = Factor(f"Sum_{factor.name}_{variable.name}", new_scope)
-    idx = factor.scope.index(variable)
     combinations = generate_combs(new_scope)
 
     new_values = []
@@ -105,7 +118,13 @@ def multiply(factor_list):
     :return: a new Factor object resulting from multiplying all the factors in factor_list.
     '''
 
-    new_scope = list({var for factor in factor_list for var in factor.scope})
+    new_scope = []
+    var_set = set()
+    for factor in factor_list:
+        for var in factor.get_scope():
+            if var not in var_set:
+                var_set.add(var)
+                new_scope.append(var)
     new_name = f"Mul_{'_'.join([factor.name for factor in factor_list])}"
     new_factor = Factor(new_name, new_scope)
     combinations = generate_combs(new_scope)
@@ -113,11 +132,10 @@ def multiply(factor_list):
     for comb in combinations:
         prob = 1.0
         for factor in factor_list:
-            relevant_comb = [comb[new_scope.index(var)] for var in factor.scope]
+            relevant_comb = [comb[new_scope.index(var)] for var in factor.get_scope()]
             prob *= factor.get_value(relevant_comb)
         new_values.append(prob)
     new_factor.values = new_values
-
     return new_factor
 
 
@@ -158,14 +176,21 @@ def min_fill_ordering(factor_list, variable_query):
     '''
 
     def get_fill_size(factor_list, var):
-        variables = {}
+        variables = set()
         for factor in factor_list:
-            if var in factor.scope:
-                variables.update(factor.scope)
+            if factor.get_variable(var.name) is not None:
+                variables.update(factor.get_scope())
         return len(variables) - 1
 
-    variables = {var for factor in factor_list for var in factor.scope}
-    variables.remove(variable_query)
+    variables = []
+    var_set = set()
+    var_set.add(variable_query)
+    for factor in factor_list:
+        for var in factor.get_scope():
+            if var not in var_set:
+                var_set.add(var)
+                variables.append(var)
+    # variables.remove(variable_query)
 
     ordering = []
     while variables:
@@ -203,7 +228,36 @@ def ve(bayes_net, var_query, varlist_evidence):
              the settings of the evidence variables.
 
     '''
-    ### YOUR CODE HERE ###
+    org_factors = bayes_net.factors()
+    # Restrict evidence variables
+    factors = []
+    for factor in org_factors:
+        for var in varlist_evidence:
+            if factor.get_variable(var.name) is not None:
+                factor = restrict(factor, var, var.get_evidence())
+        factors.append(factor)
+
+    # Eliminate hidden variables
+    elim_vars = min_fill_ordering(factors, var_query)
+    for var in elim_vars:
+        relevant = []
+        other = []
+        for factor in factors:
+            if factor.get_variable(var.name) is not None:
+                relevant.append(factor)
+            else:
+                other.append(factor)
+        new_factor = multiply(relevant)
+        new_factor = sum_out(new_factor, var)
+        factors = other + [new_factor]
+
+    # Multiply remaining factors
+    remain_factor = multiply(factors)
+
+    # Normalize
+    result = normalize(remain_factor)
+
+    return result
 
 
 ## The order of these domains is consistent with the order of the columns in the data set.
@@ -220,6 +274,7 @@ salary_variable_domains = {
 }
 
 salary_variable=Variable("Salary", ['<50K', '>=50K'])
+
 
 def naive_bayes_model(data_file, variable_domains=salary_variable_domains, class_var=salary_variable):
     '''
@@ -247,7 +302,59 @@ def naive_bayes_model(data_file, variable_domains=salary_variable_domains, class
         for row in reader:
             input_data.append(row)
 
-    ### YOUR CODE HERE ###
+    def calc_prob(data, var_domains):
+        class_name = class_var.name
+        class_domain = class_var.domain()
+        class_prob = {val: 0 for val in class_domain}
+        cond_probs = {(var_name, class_name): {}
+                      for var_name in var_domains if var_name != class_name}
+
+        indices = {var_name: headers.index(var_name) for var_name in var_domains}
+
+        for var_name in var_domains:
+            if var_name != class_name:
+                for val in var_domains[var_name]:
+                    for class_val in class_domain:
+                        cond_probs[(var_name, class_name)][(val, class_val)] = 0
+
+        for row in data:
+            class_val = row[indices[class_name]]
+            class_prob[class_val] += 1
+            for var_name in var_domains:
+                if var_name != class_name:
+                    var_val = row[indices[var_name]]
+                    cond_probs[(var_name, class_name)][(var_val, class_val)] += 1
+
+        # Calculate probabilities
+        for (var_name, class_name), counts in cond_probs.items():
+            for (var_val, class_val), count in counts.items():
+                prob = count / class_prob[class_val] if count > 0 else 0
+                cond_probs[(var_name, class_name)][(var_val, class_val)] = prob
+
+        class_sum = sum(class_prob.values())
+        for class_val in class_prob:
+            class_prob[class_val] /= class_sum
+
+        return class_prob, cond_probs
+
+    class_name = class_var.name
+    variables = [class_var]
+
+    class_prob, cond_probs = calc_prob(input_data, variable_domains)
+
+    class_factor = Factor(class_name, [class_var])
+    class_factor.add_values(list(class_prob.items()))
+    factors = [class_factor]
+    for key, value in cond_probs.items():
+        var_name = key[0]
+        var = Variable(var_name, variable_domains[var_name])
+        variables.append(var)
+        factor = Factor(f"{var_name},{class_name}", [var, class_var])
+        factor_values = [list(comb) + [val] for comb, val in value.items()]
+        factor.add_values(factor_values)
+        factors.append(factor)
+
+    return BN("BN", variables, factors)
 
 
 def explore(bayes_net, question):
@@ -264,5 +371,153 @@ def explore(bayes_net, question):
 
     @return a percentage (between 0 and 100)
     ''' 
-    ### YOUR CODE HERE ###
 
+    # Read data from test.csv
+    input_data = []
+    with open('data/adult-test.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        headers = next(reader, None) #skip header row
+        for row in reader:
+            input_data.append(row)
+
+    work = bayes_net.get_variable("Work")
+    work_idx = headers.index("Work")
+
+    edu = bayes_net.get_variable("Education")
+    edu_idx = headers.index("Education")
+
+    occup = bayes_net.get_variable("Occupation")
+    occup_idx = headers.index("Occupation")
+
+    relation = bayes_net.get_variable("Relationship")
+    relation_idx = headers.index("Relationship")
+
+    gender = bayes_net.get_variable("Gender")
+    gender_idx = headers.index("Gender")
+
+    salary = bayes_net.get_variable("Salary")
+    salary_idx = headers.index("Salary")
+
+    if question == 1:
+        num_p = 0
+        num_high_salary = 0
+        for row_data in input_data:
+            if row_data[gender_idx] == "Female":
+                num_p += 1
+                work.set_evidence(row_data[work_idx])
+                edu.set_evidence(row_data[edu_idx])
+                occup.set_evidence(row_data[occup_idx])
+                relation.set_evidence(row_data[relation_idx])
+                factor = ve(bayes_net, salary, [work, edu, occup, relation])
+                if factor.get_value(['>=50K']) > 0.5:
+                    num_high_salary += 1
+        percent = num_high_salary / num_p * 100 if num_p != 0 else 0
+        return percent
+
+    elif question == 2:
+        num_p = 0
+        num_high_salary = 0
+        for row_data in input_data:
+            if row_data[gender_idx] == "Male":
+                num_p += 1
+                work.set_evidence(row_data[work_idx])
+                edu.set_evidence(row_data[edu_idx])
+                occup.set_evidence(row_data[occup_idx])
+                relation.set_evidence(row_data[relation_idx])
+                factor = ve(bayes_net, salary, [work, edu, occup, relation])
+                if factor.get_value(['>=50K']) > 0.5:
+                    num_high_salary += 1
+        percent = num_high_salary / num_p * 100 if num_p != 0 else 0
+        return percent
+    elif question == 3:
+        num_p = 0
+        count = 0
+        for row_data in input_data:
+            num_p += 1
+            if row_data[gender_idx] == "Female":
+                work.set_evidence(row_data[work_idx])
+                edu.set_evidence(row_data[edu_idx])
+                occup.set_evidence(row_data[occup_idx])
+                relation.set_evidence(row_data[relation_idx])
+                gender.set_evidence(row_data[gender_idx])
+                fc1 = ve(bayes_net, salary, [work, edu, occup, relation])
+                prob1 = fc1.get_value(['>=50K'])
+                fc2 = ve(bayes_net, salary, [work, edu, occup, relation, gender])
+                prob2 = fc2.get_value(['>=50K'])
+                if prob1 > prob2 > 0.5:
+                    count += 1
+        percent = count / num_p * 100 if num_p != 0 else 0
+        return percent
+    elif question == 4:
+        num_p = 0
+        count = 0
+        for row_data in input_data:
+            num_p += 1
+            if row_data[gender_idx] == "Male":
+                work.set_evidence(row_data[work_idx])
+                edu.set_evidence(row_data[edu_idx])
+                occup.set_evidence(row_data[occup_idx])
+                relation.set_evidence(row_data[relation_idx])
+                gender.set_evidence(row_data[gender_idx])
+                fc1 = ve(bayes_net, salary, [work, edu, occup, relation])
+                prob1 = fc1.get_value(['>=50K'])
+                fc2 = ve(bayes_net, salary, [work, edu, occup, relation, gender])
+                prob2 = fc2.get_value(['>=50K'])
+                if prob1 > prob2 > 0.5:
+                    count += 1
+        percent = count / num_p * 100 if num_p != 0 else 0
+        return percent
+    elif question == 5:
+        num_p = 0
+        count = 0
+        for row_data in input_data:
+            if row_data[gender_idx] == "Female":
+                work.set_evidence(row_data[work_idx])
+                edu.set_evidence(row_data[edu_idx])
+                occup.set_evidence(row_data[occup_idx])
+                relation.set_evidence(row_data[relation_idx])
+                fc = ve(bayes_net, salary, [work, edu, occup, relation])
+                prob = fc.get_value(['>=50K'])
+                if prob > 0.5:
+                    num_p += 1
+                    if row_data[salary_idx] == ">=50K":
+                        count += 1
+        percent = count / num_p * 100 if num_p != 0 else 0
+        return percent
+    elif question == 6:
+        num_p = 0
+        count = 0
+        for row_data in input_data:
+            if row_data[gender_idx] == "Male":
+                work.set_evidence(row_data[work_idx])
+                edu.set_evidence(row_data[edu_idx])
+                occup.set_evidence(row_data[occup_idx])
+                relation.set_evidence(row_data[relation_idx])
+                fc = ve(bayes_net, salary, [work, edu, occup, relation])
+                prob = fc.get_value(['>=50K'])
+                if prob > 0.5:
+                    num_p += 1
+                    if row_data[salary_idx] == ">=50K":
+                        count += 1
+        percent = count / num_p * 100 if num_p != 0 else 0
+        return percent
+    else:
+        print("Invalid question number.")
+
+
+
+if __name__ == '__main__':
+    # var1 = Variable("A", [1, 2, 3])
+    # var2 = Variable("B", ['a', 'b', 'c'])
+    # var3 = Variable("C", ['x', 'y'])
+    # f1 = Factor("f1", [var1, var2, var3])
+    # f1.add_values([[1, 'a', 'x', 0.5], [1, 'a', 'y', 0.5]])
+    # f2 = Factor("f2", [var1, var2])
+    # f2.add_values([[1, 'a', 0.5], [2, 'b', 0.5]])
+    # f3 = Factor("f3", [var2, var3])
+    # f3.add_values([['a', 'x', 0.1], ['a', 'y', 0.5]])
+    # bn = BN("BN", [var1, var2, var3], [f1, f2, f3])
+    # ve(bn, var1, [var2])
+
+    bn = naive_bayes_model('adult-train.csv')
+    print(explore(bn, 1))
