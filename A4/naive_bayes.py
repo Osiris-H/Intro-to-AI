@@ -506,18 +506,23 @@ def explore(bayes_net, question):
 
 
 
-if __name__ == '__main__':
-    # var1 = Variable("A", [1, 2, 3])
-    # var2 = Variable("B", ['a', 'b', 'c'])
-    # var3 = Variable("C", ['x', 'y'])
-    # f1 = Factor("f1", [var1, var2, var3])
-    # f1.add_values([[1, 'a', 'x', 0.5], [1, 'a', 'y', 0.5]])
-    # f2 = Factor("f2", [var1, var2])
-    # f2.add_values([[1, 'a', 0.5], [2, 'b', 0.5]])
-    # f3 = Factor("f3", [var2, var3])
-    # f3.add_values([['a', 'x', 0.1], ['a', 'y', 0.5]])
-    # bn = BN("BN", [var1, var2, var3], [f1, f2, f3])
-    # ve(bn, var1, [var2])
-
-    bn = naive_bayes_model('adult-train.csv')
-    print(explore(bn, 1))
+# if __name__ == '__main__':
+#     # var1 = Variable("A", [1, 2, 3])
+#     # var2 = Variable("B", ['a', 'b', 'c'])
+#     # var3 = Variable("C", ['x', 'y'])
+#     # f1 = Factor("f1", [var1, var2, var3])
+#     # f1.add_values([[1, 'a', 'x', 0.5], [1, 'a', 'y', 0.5]])
+#     # f2 = Factor("f2", [var1, var2])
+#     # f2.add_values([[1, 'a', 0.5], [2, 'b', 0.5]])
+#     # f3 = Factor("f3", [var2, var3])
+#     # f3.add_values([['a', 'x', 0.1], ['a', 'y', 0.5]])
+#     # bn = BN("BN", [var1, var2, var3], [f1, f2, f3])
+#     # ve(bn, var1, [var2])
+#
+#     bn = naive_bayes_model('adult-train.csv')
+#     print(explore(bn, 1))
+#     print(explore(bn, 2))
+#     print(explore(bn, 3))
+#     print(explore(bn, 4))
+#     print(explore(bn, 5))
+#     print(explore(bn, 6))
