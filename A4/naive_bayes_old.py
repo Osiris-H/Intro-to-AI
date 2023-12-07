@@ -1,10 +1,8 @@
 ############################################################
 ## CSC 384, Intro to AI, University of Toronto.
 ## Assignment 4 Starter Code
-## v1.2
+## v1.1
 ## - removed the example in ve since it is misleading.
-## - updated the docstring in min_fill_ordering. The tie-breaking rule should
-##   choose the variable that comes first in the provided list of factors.
 ############################################################
 
 from bnetbase import Variable, Factor, BN
@@ -53,7 +51,7 @@ def restrict(factor, variable, value):
     :param value: the value to restrict the variable to
     :return: a new Factor object resulting from restricting variable to value.
              This new factor no longer has variable in it.
-    '''
+    ''' 
 
     new_scope = []
     idx = None
@@ -84,7 +82,7 @@ def sum_out(factor, variable):
     :param variable: the variable to sum out.
     :return: a new Factor object resulting from summing out variable from the factor.
              This new factor no longer has variable in it.
-    '''
+    '''       
 
     new_scope = []
     idx = None
@@ -148,14 +146,6 @@ def min_fill_ordering(factor_list, variable_query):
     creates the factor of the smallest size. If there is a tie, choose the variable that comes first 
     in the provided order of factors in factor_list.
 
-    The returned list is determined iteratively.
-    First, determine the size of the resulting factor when eliminating each variable from the factor_list.
-    The size of the resulting factor is the number of variables in the factor.
-    Then the first variable in the returned list should be the variable that results in the factor 
-    of the smallest size. If there is a tie, choose the variable that comes first in the provided order of 
-    factors in factor_list. 
-    Then repeat the process above to determine the second, third, ... variable in the returned list.
-
     Here is an example.
     Consider our complete Holmes network. Suppose that we are given a list of factors for the variables 
     in this order: P(E), P(B), P(A|B, E), P(G|A), and P(W|A). Assume that our query variable is Earthquake. 
@@ -169,6 +159,20 @@ def min_fill_ordering(factor_list, variable_query):
     In this case, G and W tie for the best variable to be eliminated first since eliminating each variable 
     creates a factor of 1 variable only. Based on our tie-breaking rule, we should choose G since it comes 
     before W in the list of factors provided.
+
+    This function returns a list of the variables based on the min fill heuristic.
+    Each variable in the returned list should come from the scopes of the factors in factor_list.
+    The returned list of variables should not contain the variable_query.
+
+    The returned list is determined iteratively.
+    First, determine the size of the resulting factor when eliminating each variable from the factor_list.
+    The size of the resulting factor is the number of variables in the factor.
+    Then the first variable in the returned list should be the variable that results in the factor 
+    of the smallest size. If there is a tie, choose the variable whose name comes first in alphabetical order.
+    For example, for the complete Holmes network, we would choose B to be the first variable in the returned list.
+
+    Then repeat the process above to determine the second, third, ... variable in the returned list.
+     
     '''
 
     def get_fill_size(factor_list, var):
@@ -224,7 +228,6 @@ def ve(bayes_net, var_query, varlist_evidence):
              the settings of the evidence variables.
 
     '''
-
     org_factors = bayes_net.factors()
     # Restrict evidence variables
     factors = []
@@ -367,13 +370,13 @@ def explore(bayes_net, question):
     6. What percentage of the men in the test data set with a predicted salary over $50K (P(Salary=">=$50K"|E) > 0.5) have an actual salary over $50K?
 
     @return a percentage (between 0 and 100)
-    '''
+    ''' 
 
     # Read data from test.csv
     input_data = []
     with open('data/adult-test.csv', newline='') as csvfile:
         reader = csv.reader(csvfile)
-        headers = next(reader, None)  # skip header row
+        headers = next(reader, None) #skip header row
         for row in reader:
             input_data.append(row)
 
@@ -501,3 +504,25 @@ def explore(bayes_net, question):
     else:
         print("Invalid question number.")
 
+
+
+# if __name__ == '__main__':
+#     # var1 = Variable("A", [1, 2, 3])
+#     # var2 = Variable("B", ['a', 'b', 'c'])
+#     # var3 = Variable("C", ['x', 'y'])
+#     # f1 = Factor("f1", [var1, var2, var3])
+#     # f1.add_values([[1, 'a', 'x', 0.5], [1, 'a', 'y', 0.5]])
+#     # f2 = Factor("f2", [var1, var2])
+#     # f2.add_values([[1, 'a', 0.5], [2, 'b', 0.5]])
+#     # f3 = Factor("f3", [var2, var3])
+#     # f3.add_values([['a', 'x', 0.1], ['a', 'y', 0.5]])
+#     # bn = BN("BN", [var1, var2, var3], [f1, f2, f3])
+#     # ve(bn, var1, [var2])
+#
+#     bn = naive_bayes_model('adult-train.csv')
+#     print(explore(bn, 1))
+#     print(explore(bn, 2))
+#     print(explore(bn, 3))
+#     print(explore(bn, 4))
+#     print(explore(bn, 5))
+#     print(explore(bn, 6))
